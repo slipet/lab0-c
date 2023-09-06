@@ -47,7 +47,21 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 /* Return number of elements in queue */
 int q_size(struct list_head *head)
 {
-    return -1;
+    /* if the queue is not initialized the head is NULL */
+    /* using list_empty() for first check queue is if empty.
+     * can not use head == prev => may be containing only one element
+     */
+    if (!head)
+        return 0;
+    if (list_empty(head))
+        return 0;
+
+    int len = 0;
+    struct list_head *iter;
+    /*iterate the whole list to count the size of queue*/
+    list_for_each (iter, head)
+        len++;
+    return len;
 }
 
 /* Delete the middle node in queue */
