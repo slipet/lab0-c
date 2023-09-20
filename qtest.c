@@ -42,9 +42,9 @@ extern int show_entropy;
  * OK as long as head field of queue_t structure is in first position in
  * solution code
  */
-#include "queue.h"
-
 #include "console.h"
+#include "list_sort.h"
+#include "queue.h"
 #include "report.h"
 
 /* Settable parameters */
@@ -628,6 +628,64 @@ bool do_sort(int argc, char *argv[])
     q_show(3);
     return ok && !error_check();
 }
+int cmp(void *priv, const struct list_head *a, const struct list_head *b)
+{
+    element_t *itemA = list_entry(a, element_t, list);
+    element_t *itemB = list_entry(b, element_t, list);
+    int ascend_result = ((strcmp(itemB->value, itemA->value) > 0) & descend);
+    int descend_result = ((strcmp(itemA->value, itemB->value) > 0) & !descend);
+    return ascend_result || descend_result;
+}
+
+bool do_kernel_sort(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    int cnt = 0;
+    if (!current || !current->q)
+        report(3, "Warning: Calling sort on null queue");
+    else
+        cnt = q_size(current->q);
+    error_check();
+
+    if (cnt < 2)
+        report(3, "Warning: Calling sort on single node");
+    error_check();
+
+    set_noallocate_mode(true);
+    if (current && exception_setup(true))
+        list_sort(NULL, current->q, cmp);
+    exception_cancel();
+    set_noallocate_mode(false);
+
+    bool ok = true;
+    if (current && current->size) {
+        for (struct list_head *cur_l = current->q->next;
+             cur_l != current->q && --cnt; cur_l = cur_l->next) {
+            /* Ensure each element in ascending/descending order */
+            element_t *item, *next_item;
+            item = list_entry(cur_l, element_t, list);
+            next_item = list_entry(cur_l->next, element_t, list);
+            if (!descend && strcmp(item->value, next_item->value) > 0) {
+                report(1, "ERROR: Not sorted in ascending order");
+                ok = false;
+                break;
+            }
+
+            if (descend && strcmp(item->value, next_item->value) < 0) {
+                report(1, "ERROR: Not sorted in descending order");
+                ok = false;
+                break;
+            }
+        }
+    }
+
+    q_show(3);
+    return ok && !error_check();
+}
 
 static bool do_dm(int argc, char *argv[])
 {
@@ -1036,6 +1094,9 @@ static void console_init()
         "[str]");
     ADD_COMMAND(reverse, "Reverse queue", "");
     ADD_COMMAND(sort, "Sort queue in ascending/descening order", "");
+    ADD_COMMAND(kernel_sort,
+                "Sort queue in ascending/descening order with lib/list_sort.c",
+                "");
     ADD_COMMAND(size, "Compute queue size n times (default: n == 1)", "[n]");
     ADD_COMMAND(show, "Show queue contents", "");
     ADD_COMMAND(dm, "Delete middle node in queue", "");

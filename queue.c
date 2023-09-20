@@ -48,6 +48,7 @@ static inline bool q_insert(struct list_head *head, char *s)
 
     const size_t len = strlen(s) + 1; /*+1 for '\0'*/
     new_element->value = malloc(sizeof(char) * len);
+    // new_element->value = strdup(s);
     if (!new_element->value) {
         free(new_element);
         return false;
@@ -99,9 +100,9 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 /* Return number of elements in queue */
 int q_size(struct list_head *head)
 {
-    /* If the queue is not initialized the head is NULL
+    /* If the queue is not initialized, then the head is NULL.
      * Using list_empty() for first check queue is if empty.
-     * Can not use head == prev => may be containing only one element
+     * Can not use head == prev => may be containing only one element.
      */
     if (!head || list_empty(head))
         return 0;
@@ -152,15 +153,13 @@ bool q_delete_dup(struct list_head *head)
     list_for_each_entry_safe (entry, safe, head, list) {
         if (&entry->list != head && strcmp(entry->value, safe->value) == 0) {
             element_t *del;
-            do {
+            while (&safe->list != head &&
+                   strcmp(entry->value, safe->value) == 0) {
                 del = safe;
                 safe = list_entry(safe->list.next, element_t, list);
                 list_del_init(&del->list);
                 q_release_element(del);
-            } while (&safe->list != head &&
-                     strcmp(entry->value, safe->value) == 0);
-            entry->list.prev->next = &safe->list;
-            safe->list.prev = entry->list.prev;
+            }
             list_del_init(&entry->list);
             q_release_element(entry);
         }
@@ -320,21 +319,20 @@ int q_merge(struct list_head *head, bool descend)
         return list_entry(head, queue_contex_t, chain)->size;
 
     int size = q_size(head);
+    struct list_head *forward, *backward = head->prev;
     while (size > 1) {
-        struct list_head *slow = head->next, *fast = head->next;
-        // merge fast&slow into slow pointer
+        forward = head->next;
         for (int i = 0; i < size / 2; ++i) {
             LIST_HEAD(tmp);
-            q_merge_two(&tmp, list_entry(fast, queue_contex_t, chain)->q,
-                        list_entry(fast->next, queue_contex_t, chain)->q,
+            q_merge_two(&tmp, list_entry(forward, queue_contex_t, chain)->q,
+                        list_entry(backward, queue_contex_t, chain)->q,
                         descend);
-            list_splice_tail(&tmp, list_entry(slow, queue_contex_t, chain)->q);
-            fast = fast->next->next;
-            slow = slow->next;
+            list_splice_tail(&tmp,
+                             list_entry(forward, queue_contex_t, chain)->q);
+            forward = forward->next;
+            backward = backward->prev;
         }
-        if (size & 1)
-            list_splice_tail_init(container_of(fast, queue_contex_t, chain)->q,
-                                  container_of(slow, queue_contex_t, chain)->q);
+
         size = (size + 1) / 2;
     }
 
