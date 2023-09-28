@@ -510,6 +510,57 @@ static bool do_dedup(int argc, char *argv[])
     return ok && !error_check();
 }
 
+
+/**
+ * q_shuffle() - Given the head of a linked list, suffle the nodes of the list
+ * with Fisher–Yates algorithm.
+ * @head: header of queue
+ *
+ * No effect if queue is NULL or empty.
+ * This function should not allocate or free any list elements
+ * (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
+ * It should rearrange the existing ones.
+ *
+ * Reference:
+ * https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+ */
+void q_shuffle(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    int size = q_size(head);
+    struct list_head *cur;
+    while (size) {
+        int idx = rand() % (size);
+        cur = head->next;
+        while (idx--)
+            cur = cur->next;
+        list_move_tail(cur, head);
+        size--;
+    }
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!current || !current->q)
+        report(3, "Warning: Calling reverse on null queue");
+    error_check();
+
+    set_noallocate_mode(true);
+    if (current && exception_setup(true))
+        q_shuffle(current->q);
+    exception_cancel();
+
+    set_noallocate_mode(false);
+    q_show(3);
+    return !error_check();
+}
+
 static bool do_reverse(int argc, char *argv[])
 {
     if (argc != 1) {
@@ -1035,6 +1086,7 @@ static void console_init()
         "Remove from tail of queue. Optionally compare to expected value str",
         "[str]");
     ADD_COMMAND(reverse, "Reverse queue", "");
+    ADD_COMMAND(shuffle, "Shuffle queue", "");
     ADD_COMMAND(sort, "Sort queue in ascending/descening order", "");
     ADD_COMMAND(size, "Compute queue size n times (default: n == 1)", "[n]");
     ADD_COMMAND(show, "Show queue contents", "");
