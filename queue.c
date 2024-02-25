@@ -10,6 +10,13 @@
  *   cppcheck-suppress nullPointer
  */
 
+/*Compare two values and return the smaller one.*/
+#define MIN(a, b)          \
+    ({                     \
+        typeof(a) _a = a;  \
+        typeof(b) _b = b;  \
+        _a < _b ? _a : _b; \
+    })
 
 /* Create an empty queue */
 struct list_head *q_new()
