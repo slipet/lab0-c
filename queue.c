@@ -68,12 +68,11 @@ bool q_insert_tail(struct list_head *head, char *s)
     return q_insert(head->prev, s);
 }
 
-/* Remove an element from head of queue */
-element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
+static element_t *q_remove(struct list_head *node, char *sp, size_t bufsize)
 {
-    if (head == NULL || list_empty(head))
+    if (node == NULL || list_empty(node))
         return NULL;
-    element_t *del = container_of(head->next, element_t, list);
+    element_t *del = container_of(node, element_t, list);
     if (sp != NULL && bufsize > 0) {
         size_t len =
             MIN(strlen(del->value),
@@ -81,14 +80,20 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         strncpy(sp, del->value, len);
         sp[len] = '\0';
     }
-    list_del_init(head->next);
+    list_del_init(node);
     return del;
+}
+
+/* Remove an element from head of queue */
+element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
+{
+    return q_remove(head->next, sp, bufsize);
 }
 
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    return q_remove(head->prev, sp, bufsize);
 }
 
 /* Return number of elements in queue */
