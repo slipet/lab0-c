@@ -172,7 +172,21 @@ void q_reverse(struct list_head *head)
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
-
+    if(head == NULL || list_empty(head) )
+        return;
+    struct list_head *safe, *end, *start = head;
+    int count = 0;
+    list_for_each_safe (end, safe, head) {
+        count++;
+        if(count == k){
+            LIST_HEAD(tmp);
+            list_cut_position(&tmp, start, end);
+            q_reverse(&tmp);
+            list_splice_init(&tmp, start);
+            start = safe->prev;
+            count = 0;
+        }
+    }
 }
 
 /* Sort elements of queue in ascending/descending order */
