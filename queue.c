@@ -189,7 +189,13 @@ void q_reverseK(struct list_head *head, int k)
         }
     }
 }
-
+static inline bool compare(char *left, char *right)
+{
+    /* return 1 -> left>right
+     *        0 -> left<=right
+     */
+    return strcmp(left, right) > 0;
+}
 /* Sort elements of queue in ascending/descending order */
 void q_sort(struct list_head *head, bool descend) {}
 
