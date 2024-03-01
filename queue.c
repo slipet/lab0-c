@@ -18,6 +18,27 @@
         _a < _b ? _a : _b; \
     })
 
+#define q_monotonic(head, direction)                                     \
+    ({                                                                   \
+        if (!head || list_empty(head) || list_is_singular(head))         \
+            return q_size(head);                                         \
+        element_t *entry = list_entry(head->direction, element_t, list); \
+        element_t *safe =                                                \
+            list_entry((entry->list).direction, element_t, list);        \
+        char *mx = entry->value;                                         \
+        while (&entry->list != head) {                                   \
+            if (compare(mx, entry->value)) {                             \
+                list_del(&entry->list);                                  \
+                q_release_element(entry);                                \
+            } else {                                                     \
+                mx = entry->value;                                       \
+            }                                                            \
+            entry = safe;                                                \
+            safe = list_entry((entry->list).direction, element_t, list); \
+        }                                                                \
+        q_size(head);                                                    \
+    });
+
 /* Create an empty queue */
 struct list_head *q_new()
 {
@@ -199,49 +220,18 @@ static inline bool compare(char *left, char *right)
 /* Sort elements of queue in ascending/descending order */
 void q_sort(struct list_head *head, bool descend) {}
 
-static inline int q_monotonic(struct list_head *head, bool descend)
-{
-    // 1 for descend
-    // 0 for ascend
-    if (head == NULL || list_empty(head) || list_is_singular(head))
-        return list_is_singular(head);
-    element_t *entry, *safe;
-    if (descend) {
-        entry = list_entry(head->prev, element_t, list);
-        safe = list_entry((entry->list).prev, element_t, list);
-    } else {
-        entry = list_entry(head->next, element_t, list);
-        safe = list_entry((entry->list).next, element_t, list);
-    }
-    char *mx = entry->value;
-    while (&entry->list != head) {
-        if (compare(mx, entry->value)) {
-            list_del_init(&entry->list);
-            q_release_element(entry);
-        } else
-            mx = entry->value;
-        entry = safe;
-        if (descend) {
-            safe = list_entry((entry->list).prev, element_t, list);
-        } else {
-            safe = list_entry((entry->list).next, element_t, list);
-        }
-    }
-    return q_size(head);
-}
-
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
 int q_ascend(struct list_head *head)
 {
-    return queue_convert_Monotonic(head, 0);
+    return q_monotonic(head, next);
 }
 
 /* Remove every node which has a node with a strictly greater value anywhere to
  * the right side of it */
 int q_descend(struct list_head *head)
 {
-    return queue_convert_Monotonic(head, 1);
+    return q_monotonic(head, prev);
 }
 
 /* Merge all the queues into one sorted queue, which is in ascending/descending
