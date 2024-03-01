@@ -37,7 +37,7 @@
             safe = list_entry((entry->list).direction, element_t, list); \
         }                                                                \
         q_size(head);                                                    \
-    });
+    })
 
 /* Create an empty queue */
 struct list_head *q_new()
