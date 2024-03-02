@@ -217,8 +217,54 @@ static inline bool compare(char *left, char *right)
      */
     return strcmp(left, right) > 0;
 }
+
+static inline void q_merge_two(struct list_head *head,
+                               struct list_head *left,
+                               struct list_head *right,
+                               bool descend)
+{
+    /* descend = 0 for ascending
+     *           1 for descending
+     */
+
+    while (!list_empty(left) && !list_empty(right)) {
+        if ((compare(list_entry(left->next, element_t, list)->value,
+                     list_entry(right->next, element_t, list)->value) &
+             descend) ||
+            (compare(list_entry(right->next, element_t, list)->value,
+                     list_entry(left->next, element_t, list)->value) &
+             (!descend))) {
+            list_move_tail(left->next, head);
+        } else {
+            list_move_tail(right->next, head);
+        }
+    }
+    if (!list_empty(left)) {
+        list_splice_tail_init(left, head);
+    } else {
+        list_splice_tail_init(right, head);
+    }
+}
 /* Sort elements of queue in ascending/descending order */
-void q_sort(struct list_head *head, bool descend) {}
+void q_sort(struct list_head *head, bool descend)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    struct list_head **indirect = &head;
+    struct list_head *back = head->prev;
+    /* Find the middle of the list. */
+    while (*indirect != back && (*indirect)->next != back) {
+        indirect = &(*indirect)->next;
+        back = back->prev;
+    }
+    LIST_HEAD(left);
+    LIST_HEAD(right);
+    list_splice_tail_init(head, &right);
+    list_cut_position(&left, &right, back);
+    q_sort(&left, descend);
+    q_sort(&right, descend);
+    q_merge_two(head, &left, &right, descend);
+}
 
 /* Remove every node which has a node with a strictly less value anywhere to
  * the right side of it */
