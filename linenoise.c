@@ -897,7 +897,8 @@ static int line_edit(int stdin_fd,
                      int stdout_fd,
                      char *buf,
                      size_t buflen,
-                     const char *prompt)
+                     const char *prompt,
+                     int (*web_func)(char *))
 {
     struct line_state l;
 
@@ -932,10 +933,17 @@ static int line_edit(int stdin_fd,
         int nread;
         char seq[5];
 
+        // if (web_func != NULL) {
+        //     int result = web_func(l.buf);
+        //     if (result > 0)
+        //         return result;
+        // }
+
         nread = read(l.ifd, &c, 1);
+        printf("[%c][%d]\n",c, nread);
         if (nread <= 0)
             return l.len;
-
+        
         /* Only autocomplete when the callback is set. It returns < 0 when
          * there was an error reading from fd. Otherwise it will return the
          * character that should be handled next.
@@ -1120,7 +1128,10 @@ static int line_edit(int stdin_fd,
 /* This function calls the line editing function line_edit() using
  * the STDIN file descriptor set in raw mode.
  */
-static int line_raw(char *buf, size_t buflen, const char *prompt)
+static int line_raw(char *buf,
+                    size_t buflen,
+                    const char *prompt,
+                    int (*web_func)(char *))
 {
     if (buflen == 0) {
         errno = EINVAL;
@@ -1129,7 +1140,8 @@ static int line_raw(char *buf, size_t buflen, const char *prompt)
 
     if (enable_raw_mode(STDIN_FILENO) == -1)
         return -1;
-    int count = line_edit(STDIN_FILENO, STDOUT_FILENO, buf, buflen, prompt);
+    int count =
+        line_edit(STDIN_FILENO, STDOUT_FILENO, buf, buflen, prompt, web_func);
     disable_raw_mode(STDIN_FILENO);
     printf("\n");
     return count;
@@ -1181,7 +1193,7 @@ static char *line_no_tty(void)
  * editing function or uses dummy fgets() so that you will be able to type
  * something even in the most desperate of the conditions.
  */
-char *linenoise(const char *prompt)
+char *linenoise(const char *prompt, int (*web_func)(char *))
 {
     char buf[LINENOISE_MAX_LINE];
 
@@ -1209,7 +1221,7 @@ char *linenoise(const char *prompt)
         return strdup(buf);
     }
 
-    int count = line_raw(buf, LINENOISE_MAX_LINE, prompt);
+    int count = line_raw(buf, LINENOISE_MAX_LINE, prompt, web_func);
     if (count == -1)
         return NULL;
     return strdup(buf);

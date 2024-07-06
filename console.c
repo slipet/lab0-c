@@ -678,6 +678,50 @@ void completion(const char *buf, line_completions_t *lc)
     }
 }
 
+int web_proc(char *buf)
+{
+    fd_set set;
+    int nfds = STDIN_FILENO;
+    FD_ZERO(&set);
+    FD_SET(nfds, &set);
+    if (web_fd > 0)
+        FD_SET(web_fd, &set);
+    if (web_fd >= nfds)
+        nfds = web_fd;
+
+    int rv = select(nfds + 1, &set, NULL, NULL, NULL);
+
+    if (rv < 0)
+        return -1;
+
+    if (web_fd > 0 && FD_ISSET(web_fd, &set)) {
+        FD_CLR(web_fd, &set);
+
+        struct sockaddr_in clientaddr;
+        socklen_t clientlen = sizeof(clientaddr);
+        web_connfd =
+            accept(web_fd, (struct sockaddr *) &clientaddr, &clientlen);
+
+        char *p = web_recv(web_connfd, &clientaddr);
+        // char *buffer = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n";
+        char *buffer =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n\r\n"
+            "<html><head>"
+            "<link rel=\"shortcut icon\" href=\"#\">"
+            "</head><body>\n";
+        web_send(web_connfd, buffer);
+        strncpy(buf, p, strlen(p) + 1);
+
+        free(p);
+        close(web_connfd);
+        return strlen(buf);
+    }
+
+    FD_CLR(STDIN_FILENO, &set);
+    return 0;
+}
+
 bool run_console(char *infile_name)
 {
     if (!push_file(infile_name)) {
@@ -687,17 +731,16 @@ bool run_console(char *infile_name)
 
     if (!has_infile) {
         char *cmdline;
-        while (use_linenoise && (cmdline = linenoise(prompt))) {
+        while ((cmdline = linenoise(prompt, web_proc))) {
             interpret_cmd(cmdline);
             line_history_add(cmdline);       /* Add to the history. */
             line_history_save(HISTORY_FILE); /* Save the history on disk. */
             line_free(cmdline);
-            while (buf_stack && buf_stack->fd != STDIN_FILENO)
-                cmd_select(0, NULL, NULL, NULL, NULL);
             has_infile = false;
         }
-        if (!use_linenoise) {
-            while (!cmd_done())
+        printf("cmd_done(): %d\n",cmd_done());
+        while (!cmd_done()){
+                printf("while running\n");
                 cmd_select(0, NULL, NULL, NULL, NULL);
         }
     } else {
