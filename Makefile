@@ -1,11 +1,23 @@
 CC = gcc
 CFLAGS = -O1 -g -Wall -Werror -Idudect -I.
-
+GFLAGS := -Wall -Wextra -std=c11 -g
+GFLAGS += -I. -MMD
 # Emit a warning should any variable-length array be found within the code.
 CFLAGS += -Wvla
 
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
+AGENT_DIR := agents
+TRAIN = train
+RL = rl
+MCTS = mcts
+RL_GFLAGS := $(GFLAGS) -D USE_RL
+MCTS_GFLAGS := $(GFLAGS) -D USE_MCTS
+MCTS_LDFLAGS := $(LDFLAGS) -lm
+ELO = elo
+ELO_GFLAGS := $(GFLAGS)
+ELO_LDFLAGS := $(LDFLAGS) -lm
+
 all: $(GIT_HOOKS) qtest
 
 tid := 0
@@ -40,8 +52,13 @@ $(GIT_HOOKS):
 OBJS := qtest.o report.o console.o harness.o queue.o \
         random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
         shannon_entropy.o \
-        linenoise.o web.o
-
+        linenoise.o web.o \
+		ttt.o \
+		game.o \
+		mt19937-64.o \
+		zobrist.o \
+		agents/negamax.o 
+		
 deps := $(OBJS:%.o=.%.o.d)
 
 qtest: $(OBJS)
@@ -49,6 +66,7 @@ qtest: $(OBJS)
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 %.o: %.c
+	@mkdir -p .$(AGENT_DIR)
 	@mkdir -p .$(DUT_DIR)
 	$(VECHO) "  CC\t$@\n"
 	$(Q)$(CC) -o $@ $(CFLAGS) -c -MMD -MF .$@.d $<
@@ -75,7 +93,7 @@ valgrind: valgrind_existence
 	@echo "scripts/driver.py -p $(patched_file) --valgrind -t <tid>"
 
 clean:
-	rm -f $(OBJS) $(deps) *~ qtest /tmp/qtest.*
+	rm -f $(OBJS) $(deps) $(GOBJS) $(game_deps) *~ qtest /tmp/qtest.*
 	rm -rf .$(DUT_DIR)
 	rm -rf *.dSYM
 	(cd traces; rm -f *~)

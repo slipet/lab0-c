@@ -13,8 +13,8 @@
 
 #include "console.h"
 #include "report.h"
+#include "ttt.h"
 #include "web.h"
-
 /* Some global values */
 int simulation = 0;
 int show_entropy = 0;
@@ -412,6 +412,12 @@ static bool do_web(int argc, char *argv[])
     }
     return true;
 }
+static bool do_ttt(int argc, char *argv[])
+{
+    printf("activate ttt\n");
+    run_ttt();
+    return true;
+}
 
 /* Initialize interpreter */
 void init_cmd()
@@ -430,6 +436,7 @@ void init_cmd()
     ADD_COMMAND(log, "Copy output to file", "file");
     ADD_COMMAND(time, "Time command execution", "cmd arg ...");
     ADD_COMMAND(web, "Read commands from builtin web server", "[port]");
+    ADD_COMMAND(ttt, "Tic-Tac-Toe activation", "");
     add_cmd("#", do_comment_cmd, "Display comment", "...");
     add_param("simulation", &simulation, "Start/Stop simulation mode", NULL);
     add_param("verbose", &verblevel, "Verbosity level", NULL);
@@ -738,10 +745,10 @@ bool run_console(char *infile_name)
             line_free(cmdline);
             has_infile = false;
         }
-        printf("cmd_done(): %d\n",cmd_done());
-        while (!cmd_done()){
-                printf("while running\n");
-                cmd_select(0, NULL, NULL, NULL, NULL);
+        printf("cmd_done(): %d\n", cmd_done());
+        while (!cmd_done()) {
+            printf("while running\n");
+            cmd_select(0, NULL, NULL, NULL, NULL);
         }
     } else {
         while (!cmd_done())

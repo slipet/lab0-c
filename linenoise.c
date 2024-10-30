@@ -940,10 +940,10 @@ static int line_edit(int stdin_fd,
         // }
 
         nread = read(l.ifd, &c, 1);
-        printf("[%c][%d]\n",c, nread);
+        // printf("[%c][%d]\n",c, nread);
         if (nread <= 0)
             return l.len;
-        
+
         /* Only autocomplete when the callback is set. It returns < 0 when
          * there was an error reading from fd. Otherwise it will return the
          * character that should be handled next.
