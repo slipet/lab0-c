@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "game.h"
 #include "mcts.h"
+#include "ttt/game.h"
 #include "util.h"
 
 struct node {

@@ -13,7 +13,7 @@
 
 #include "console.h"
 #include "report.h"
-#include "ttt.h"
+#include "ttt/ttt.h"
 #include "web.h"
 /* Some global values */
 int simulation = 0;

@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "game.h"
 #include "reinforcement_learning.h"
+#include "ttt/game.h"
 #include "util.h"
 
 // Uncomment it if you want to see the log output.

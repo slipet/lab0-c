@@ -5,6 +5,7 @@ GFLAGS += -I. -MMD
 # Emit a warning should any variable-length array be found within the code.
 CFLAGS += -Wvla
 
+TTT_DIR = ttt
 GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
 AGENT_DIR := agents
@@ -53,10 +54,10 @@ OBJS := qtest.o report.o console.o harness.o queue.o \
         random.o dudect/constant.o dudect/fixture.o dudect/ttest.o \
         shannon_entropy.o \
         linenoise.o web.o \
-		ttt.o \
-		game.o \
-		mt19937-64.o \
-		zobrist.o \
+		$(TTT_DIR)/ttt.o \
+		$(TTT_DIR)/game.o \
+		$(TTT_DIR)/mt19937-64.o \
+		$(TTT_DIR)/zobrist.o \
 		agents/negamax.o 
 		
 deps := $(OBJS:%.o=.%.o.d)
@@ -66,6 +67,7 @@ qtest: $(OBJS)
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 %.o: %.c
+	@mkdir -p .$(TTT_DIR)
 	@mkdir -p .$(AGENT_DIR)
 	@mkdir -p .$(DUT_DIR)
 	$(VECHO) "  CC\t$@\n"
@@ -93,7 +95,7 @@ valgrind: valgrind_existence
 	@echo "scripts/driver.py -p $(patched_file) --valgrind -t <tid>"
 
 clean:
-	rm -f $(OBJS) $(deps) $(GOBJS) $(game_deps) *~ qtest /tmp/qtest.*
+	rm -f $(OBJS) $(deps) *~ qtest /tmp/qtest.*
 	rm -rf .$(DUT_DIR)
 	rm -rf *.dSYM
 	(cd traces; rm -f *~)
