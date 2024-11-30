@@ -8,6 +8,7 @@
 #include "ttt/game.h"
 #include "util.h"
 
+#include <stdio.h>
 struct node {
     int move;
     char player;
@@ -62,7 +63,7 @@ static struct node *select_move(struct node *node)
     return best_node;
 }
 
-static double simulate(char *table, char player)
+static double simulate(const char *table, char player)
 {
     char current_player = player;
     char temp_table[N_GRIDS];
@@ -97,7 +98,7 @@ static void backpropagate(struct node *node, double score)
     }
 }
 
-static void expand(struct node *node, char *table)
+static void expand(struct node *node, const char *const table)
 {
     int *moves = available_moves(table);
     int n_moves = 0;
@@ -109,10 +110,10 @@ static void expand(struct node *node, char *table)
     free(moves);
 }
 
-int mcts(char *table, char player)
+int mcts(const char *const table, const char *const player)
 {
     char win;
-    struct node *root = new_node(-1, player, NULL);
+    struct node *root = new_node(-1, *player, NULL);
     for (int i = 0; i < ITERATIONS; i++) {
         struct node *node = root;
         char temp_table[N_GRIDS];

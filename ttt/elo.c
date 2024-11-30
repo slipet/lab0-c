@@ -44,14 +44,14 @@ static int play_game(int player1, int player2)
     negamax_init();
 
     while (1) {
-        char win = check_win(table);
+        char _win = check_win(table);
 
-        if (win != ' ') {
+        if (_win != ' ') {
             zobrist_destroy_table();
             free(agent.state_value);
-            if (win == 'D')
+            if (_win == 'D')
                 return 0;
-            return win == 'X' ? 1 : -1;
+            return _win == 'X' ? 1 : -1;
         }
 
         int move;

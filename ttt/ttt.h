@@ -9,12 +9,18 @@
 #include <time.h>
 
 #include "game.h"
-#ifdef USE_RL
-#include "agents/reinforcement_learning.h"
-#elif defined(USE_MCTS)
-#include "agents/mcts.h"
-#else
-#include "agents/negamax.h"
-#endif
 
-int run_ttt(void);
+
+typedef struct {
+    char *algo;
+    int argc;
+    char **argv;
+} ttt_config;
+
+
+
+#include "agents/mcts.h"
+#include "agents/negamax.h"
+#include "agents/reinforcement_learning.h"
+int tic_tac_toe(int, int);
+void init_ttt(int, int, void **);

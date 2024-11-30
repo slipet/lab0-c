@@ -59,11 +59,11 @@ void load_model(rl_agent_t *agent,
     fclose(fptr);
 }
 
-int get_action_exploit(char *table, rl_agent_t *agent)
+int get_action_exploit(char *table, const rl_agent_t *const agent)
 {
     int max_act = -1;
     float max_q = -FLT_MAX;
-    float *state_value = agent->state_value;
+    const float *state_value = agent->state_value;
     int candidate_count = 1;
 #ifdef VERBOSE
     printf("[ ");
@@ -94,14 +94,14 @@ int get_action_exploit(char *table, rl_agent_t *agent)
     return max_act;
 }
 
-int play_rl(char *table, rl_agent_t *agent)
+int play_rl(char *table, const rl_agent_t *const agent)
 {
     int move = get_action_exploit(table, agent);
     table[move] = agent->player;
     return move;
 }
 
-void store_state_value(rl_agent_t *agent, unsigned int N_STATES)
+void store_state_value(const rl_agent_t *agent, unsigned int N_STATES)
 {
     FILE *fptr = NULL;
     if ((fptr = fopen(MODEL_NAME, "wb")) == NULL) {

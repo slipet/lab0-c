@@ -412,10 +412,43 @@ static bool do_web(int argc, char *argv[])
     }
     return true;
 }
+
 static bool do_ttt(int argc, char *argv[])
 {
-    printf("activate ttt\n");
-    run_ttt();
+    char *mcts_opts[] = {"float", "fixed32", "fixed64"};
+
+    const ttt_config _ttt_config[] = {
+        {.algo = "RL"},
+        {.algo = "MCTS", .argc = 3, .argv = mcts_opts},
+        {.algo = "MINMAX"},
+        {.algo = "Default"}};
+    printf("activate tic-tac-toe\n");
+    int _ttt_config_sz = sizeof(_ttt_config) / sizeof(_ttt_config[0]);
+    const char *const algo_name = argv[1];
+    const char *const para = argv[2];
+    int algo = -1;
+    int opt = -1;
+    if (argc < 1) {
+        printf("Usage: ttt <algo> [<option>]\n");
+        return true;
+    }
+
+    for (int i = 0; i < _ttt_config_sz; i++) {
+        if (strcmp(_ttt_config[i].algo, algo_name) == 0)
+            algo = i;
+    }
+    if (algo < 0) {
+        printf("Invalid algo specified");
+        return true;
+    }
+    if (argc > 2) {
+        for (int j = 0; j < _ttt_config[algo].argc; ++j) {
+            if (strcmp((const char *) (_ttt_config[algo].argv[j]), para) == 0)
+                opt = j;
+        }
+    }
+    tic_tac_toe(algo, opt);
+
     return true;
 }
 

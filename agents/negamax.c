@@ -11,7 +11,7 @@
 #include "util.h"
 
 
-#define MAX_SEARCH_DEPTH 6
+#define MAX_SEARCH_DEPTH 8
 
 static int history_score_sum[N_GRIDS];
 static int history_count[N_GRIDS];
@@ -20,7 +20,7 @@ static uint64_t hash_value;
 
 static int cmp_moves(const void *a, const void *b)
 {
-    int *_a = (int *) a, *_b = (int *) b;
+    const int *const _a = (int *) a, *const _b = (int *) b;
     int score_a = 0, score_b = 0;
 
     if (history_count[*_a])
@@ -36,7 +36,7 @@ static move_t negamax(char *table, int depth, char player, int alpha, int beta)
         move_t result = {get_score(table, player), -1};
         return result;
     }
-    zobrist_entry_t *entry = zobrist_get(hash_value);
+    const zobrist_entry_t *const entry = zobrist_get(hash_value);
     if (entry)
         return (move_t){.score = entry->score, .move = entry->move};
 
@@ -89,14 +89,14 @@ void negamax_init()
     hash_value = 0;
 }
 
-move_t negamax_predict(char *table, char player)
+int negamax_predict(char *table, const char *player)
 {
     memset(history_score_sum, 0, sizeof(history_score_sum));
     memset(history_count, 0, sizeof(history_count));
     move_t result;
     for (int depth = 2; depth <= MAX_SEARCH_DEPTH; depth += 2) {
-        result = negamax(table, depth, player, -100000, 100000);
+        result = negamax(table, depth, *player, -100000, 100000);
         zobrist_clear();
     }
-    return result;
+    return result.move;
 }

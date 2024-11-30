@@ -10,14 +10,6 @@ GIT_HOOKS := .git/hooks/applied
 DUT_DIR := dudect
 AGENT_DIR := agents
 TRAIN = train
-RL = rl
-MCTS = mcts
-RL_GFLAGS := $(GFLAGS) -D USE_RL
-MCTS_GFLAGS := $(GFLAGS) -D USE_MCTS
-MCTS_LDFLAGS := $(LDFLAGS) -lm
-ELO = elo
-ELO_GFLAGS := $(GFLAGS)
-ELO_LDFLAGS := $(LDFLAGS) -lm
 
 all: $(GIT_HOOKS) qtest
 
@@ -58,8 +50,10 @@ OBJS := qtest.o report.o console.o harness.o queue.o \
 		$(TTT_DIR)/game.o \
 		$(TTT_DIR)/mt19937-64.o \
 		$(TTT_DIR)/zobrist.o \
+		agents/mcts.o \
+		agents/reinforcement_learning.o \
 		agents/negamax.o 
-		
+
 deps := $(OBJS:%.o=.%.o.d)
 
 qtest: $(OBJS)
@@ -96,7 +90,7 @@ valgrind: valgrind_existence
 
 clean:
 	rm -f $(OBJS) $(deps) *~ qtest /tmp/qtest.*
-	rm -rf .$(DUT_DIR)
+	rm -rf .$(DUT_DIR) .$(AGENT_DIR) .$(TTT_DIR)
 	rm -rf *.dSYM
 	(cd traces; rm -f *~)
 
